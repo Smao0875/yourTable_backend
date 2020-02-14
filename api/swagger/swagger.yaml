@@ -1,0 +1,642 @@
+swagger: "2.0"
+info:
+  version: "0.0.2"
+  title: YourTable
+# during dev, should point to your local machine
+host: localhost:10010
+# basePath prefixes all resource paths 
+basePath: /
+# 
+schemes:
+  # tip: remove http to make production-grade
+  - http
+  - https
+# format of bodies a client can send (Content-Type)
+consumes:
+  - application/json
+# format of the responses to the client (Accepts)
+produces:
+  - application/json
+paths:
+  /login/facebook:
+    # binds a127 app logic to a route
+    x-swagger-router-controller: UserController
+    post:
+      description: Returns user's profile and auth token
+      tags:
+        - authentication
+      # used as the method name of the controller
+      operationId: facebookLogin
+      parameters:
+        - name: authBody
+          in: body
+          description: facebook token from fb
+          required: true
+          schema:
+            properties:
+              access_token:
+                type: string
+              firebase_id:
+                type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            # a pointer to a definition
+            $ref: "#/definitions/LoginResponse"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /profile:
+     # binds a127 app logic to a route
+    x-swagger-router-controller: UserController
+    get:
+      description: Returns user's profile
+      tags:
+        - authentication
+      operationId: getMyProfile
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            # a pointer to a definition
+            $ref: "#/definitions/Profile"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    put:
+      description: Returns user's profile
+      tags:
+        - authentication
+      operationId: updateProfile
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
+        - name: profileUpdate
+          in: body
+          required: true
+          description: update user's profile
+          schema:
+            properties:
+              displayName:
+                type: string
+              email:
+                type: string
+              phone:
+                type: string
+              avatar:
+                type: string
+      responses:
+        "204":
+          description: Success
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      description: upload user's avatar
+      tags:
+        - authentication
+      operationId: uploadAvatar
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
+        - name: upload
+          in: formData
+          type: file
+          required: true
+      responses:
+        "204":
+          description: Success
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+            
+  /events/:
+    x-swagger-router-controller: EventController
+    get:
+      description: get pagenated events within a radius or by created time if user location is not provided
+      tags:
+        - event
+      operationId: getEvents
+      parameters:
+        - name: page
+          type: number
+          in: query
+          required: true
+          default: 1
+        - name: pageSize
+          type: number
+          in: query
+          required: true
+          default: 10
+        - name: lat
+          type: number
+          in: query
+        - name: lng
+          type: number
+          in: query
+        - name: radius
+          type: number
+          in: query
+          default: 10000
+          required: true
+          description: we are using meter as base UNIT
+        - name: search  
+          type: string
+          in: query
+          description: match event title or description
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              events:
+                type: array
+                items:
+                  $ref: "#/definitions/Event"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      description: Create event with authorized user
+      tags:
+        - event
+      operationId: createEvent
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
+        - name: eventCreate
+          in: body
+          required: true
+          description: Event body
+          schema:
+            properties:
+              yelpID:
+                type: string
+              title:
+                type: string
+              description:
+                type: string
+              purpose:
+                type: string
+              startTime:
+                type: string
+              minAge:
+                type: number
+              maxAge:
+                type: number
+              capacity:
+                type: number
+              gender: 
+                type: string
+              lng:
+                description: user current location, will be updated to restaurant location later
+                type: number
+              lat: 
+                description: user current location, will be updated to restaurant location later
+                type: number
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /events/{id}:
+    x-swagger-router-controller: EventController
+    get:
+      description: get a single event by mongo id
+      tags:
+        - event
+      operationId: getOne
+      parameters:
+        - name: id
+          type: string
+          in: path
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              events:
+                type: array
+                items:
+                  $ref: "#/definitions/Event"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    delete:
+      description: delete a single event by mongo id
+      tags:
+        - event
+      operationId: delete
+      parameters:
+        - name: Authorization
+          type: string
+          in: header
+          required: true
+        - name: id
+          type: string
+          in: path
+          required: true
+      responses:
+        "204":
+          description: Success
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"   
+    put:
+      description: update a single event by mongo id
+      tags:
+        - event
+      operationId: update
+      parameters:
+      - name: id
+        description: event id
+        type: string
+        in: path
+        required: true
+      - name: Authorization
+        type: string
+        in: header
+        required: true
+      - name: eventUpdate
+        description: event body
+        in: body
+        required: true
+        schema:
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            purpose:
+              type: string
+            minAge:
+              type: number
+            maxAge:
+              type: number
+            lat:
+              description: user current location
+              type: number
+            lng:
+              description: user current location
+              type: number
+      responses:
+        "204":
+          description: Success
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+            
+  /restaurants/{id}:
+    x-swagger-router-controller: PromotionController
+    get:
+      description: get restaurant detailed info by yelp id
+      tags:
+        - restaurant
+      operationId: getRestaurantById
+      parameters:
+        - name: id
+          type: string
+          in: path
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              restaurants:
+                type: array
+                items:
+                  $ref: "#/definitions/Restaurant"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+            
+  /promotions:
+    x-swagger-router-controller: PromotionController
+    post:
+      description: Uploads csv file of restaurant/promotion info, admin required.
+      tags:
+        - promotion
+      operationId: createPromotion
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          required: true
+        - name: upload
+          in: formData
+          type: file
+          required: true
+      responses:
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    get:
+      description: Get a list of nearby promotions.
+      tags:
+        - promotion
+      operationId: getPromotions
+      parameters:
+        - name: page
+          type: number
+          in: query
+          required: true
+          default: 1
+        - name: pageSize
+          type: number
+          in: query
+          required: true
+          default: 10
+        - name: lat
+          type: number
+          in: query
+        - name: lng
+          type: number
+          in: query
+        - name: radius
+          type: number
+          in: query
+          default: 10000
+          required: true
+          description: we are using meter as base UNIT
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              promotions:
+                type: array
+                items:
+                  $ref: "#/definitions/Promotion"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /promotions/{id}:
+    x-swagger-router-controller: PromotionController
+    get:
+      description: get a single promotion by mongo id.
+      tags:
+        - promotion
+      operationId: getPromotionById
+      parameters:
+        - name: id
+          type: string
+          in: path
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            properties:
+              promotions:
+                type: array
+                items:
+                  $ref: "#/definitions/Promotion"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /swagger:
+    x-swagger-pipe: swagger_raw
+# complex objects have schema definitions
+definitions:
+  Profile:
+    type: object
+    properties:
+      id:
+        type: string
+      facebookID:
+        type: string
+      firebaseID:
+        type: string
+      firstname:
+        type: string
+      displayName:
+        type: string
+      lastname:
+        type: string
+      gender: 
+        type: string
+      email:
+        type: string
+      birthday: 
+        type: string
+      avatar:
+        type: string
+      phone:
+        type: string
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+  Event:
+    type: object
+    properties:
+      id:
+        type: string
+      yelpID:
+        type: string
+      title: 
+        type: string
+      description:
+        type: string
+      purpose:
+        type: string
+      startTime:
+        type: string
+      minAge:
+        type: number
+      maxAge:
+        type: number
+      capacity:
+        type: number
+      gender:
+        type: string
+      attendees:
+        type: array
+        items:
+          $ref: "#/definitions/Profile"
+      author:
+          $ref: "#/definitions/Profile"
+      hasFinished:
+        type: boolean
+      isDeleted:
+        type: boolean
+      lng: 
+        type: number
+      lat:
+        type: number
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+        
+  Restaurant:
+    type: object
+    properties:
+      id: 
+        type: string
+      name:
+        type: string
+      image_url:
+        type: string
+      url:
+        type: string
+      is_claimed:
+        type: boolean
+      is_closed:
+        type: boolean
+      phone: 
+        type: string
+      categories:
+        type: object
+        properties:
+          alias:
+            type: string
+          title:
+            type: string
+      rating:
+        type: number
+      location:
+        type: object
+        properties:
+          address1:
+            type: string
+          address2:
+            type: string
+          address3:
+            type: string
+          city:
+            type: string
+          zip_code:
+            type: string
+          country:
+            type: string
+          state:
+            type: string
+          display_address:
+            type: array
+            items:
+              type: string
+          cross_streets:
+            type: string
+      coordinates:
+        type: object
+        properties:
+          latitude:
+            type: number
+          longitude:
+            type: number
+      photos:
+        type: array
+        items:
+          type: string
+      hours:
+        type: object
+        properties:
+          hours_type:
+            type: string
+          is_open_now:
+            type: boolean
+
+  Promotion:
+    type: object
+    properties:
+      yelpID:
+        type: string
+      name:
+        type: string
+      contact:
+        type: string
+      email:
+        type: string
+        format: email
+      phone:
+        type: string
+        format: phone
+      country:
+        type: string
+      province:
+        type: string
+      city:
+        type: string
+      street:
+        type: string
+      promotionType:
+        type: string
+        enum: [featured, discount, deal]
+      startDate:
+        type: string
+      endDate:
+        type: string
+      startHour:
+        type: string
+      endHour:
+        type: string
+      price:
+        type: string
+      amount:
+        type: number
+      item:
+        type: string
+      images:
+        type: array
+        items: 
+          type: string
+  LoginResponse:
+      type: object
+      properties:
+        profile: 
+          $ref: "#/definitions/Profile"
+        isNewUser:
+          type: boolean
+        token:
+          type: string
+     
+  SuccessResponse:
+      type: string
+                
+  ErrorResponse:
+      type: string

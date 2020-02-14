@@ -1,0 +1,35 @@
+{
+  "name": "closr_server",
+  "version": "0.0.1",
+  "private": true,
+  "description": "New Swagger API Project",
+  "keywords": [],
+  "author": "",
+  "license": "",
+  "main": "app.js",
+  "dependencies": {
+    "async": "^2.5.0",
+    "aws-sdk": "^2.123.0",
+    "express": "^4.12.3",
+    "lodash": "^4.17.4",
+    "mongoose": "^4.11.14",
+    "swagger-express-mw": "^0.1.0",
+    "jsonwebtoken": "8.0.1",
+    "validator": "9.0.0",
+    "request": "2.83.0",
+    "request-promise": "^4.2.2",
+    "fast-csv": "~2.4.1"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "chai-http": "^3.0.0",
+    "mocha": "^4.0.1",
+    "should": "^7.1.0",
+    "supertest": "^1.2.0",
+    "swagger": "^0.7.5"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "test": "mocha --timeout 10000"
+  }
+}
