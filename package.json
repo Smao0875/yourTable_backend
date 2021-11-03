@@ -15,7 +15,7 @@
     "mongoose": "^4.11.14",
     "swagger-express-mw": "^0.1.0",
     "jsonwebtoken": "8.0.1",
-    "validator": "9.0.0",
+    "validator": "13.7.0",
     "request": "2.83.0",
     "request-promise": "^4.2.2",
     "fast-csv": "~2.4.1"
